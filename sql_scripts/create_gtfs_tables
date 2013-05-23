@@ -1,0 +1,199 @@
+-- # Copyright 2013 by Douglas R. Tillberg <doug@transitboston.com>.  This file is part of the mbta_map project. 
+-- # It is subject to the license terms in the LICENSE file found in the top-level directory of this distribution 
+-- # and at https://github.com/doug0/mbta_map/blob/master/LICENSE. No part of the mbta_map project, including this file, 
+-- # may be copied, modified, propagated, or distributed except according to the terms contained in the LICENSE file.
+
+CREATE TABLE sched_feed_info (
+mysql_id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+feed_publisher_name VARCHAR(60), 
+feed_publisher_url VARCHAR(120), 
+feed_lang CHAR(2), 
+feed_start_date DATE, KEY(feed_start_date), 
+feed_end_date DATE, KEY(feed_end_date), 
+feed_version VARCHAR(200), 
+data_hash BINARY(16), KEY(data_hash), 
+html_file_etag VARCHAR(30) NOT NULL DEFAULT "", KEY(html_file_etag),
+html_file_content_length INT UNSIGNED, KEY(html_file_content_length),
+timestamp TIMESTAMP
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_cal (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+service_id VARCHAR(200) NOT NULL, KEY(service_id), 
+monday TINYINT UNSIGNED NOT NULL, KEY(monday), 
+tuesday TINYINT UNSIGNED NOT NULL, KEY(tuesday), 
+wednesday TINYINT UNSIGNED NOT NULL, KEY(wednesday), 
+thursday TINYINT UNSIGNED NOT NULL, KEY(thursday), 
+friday TINYINT UNSIGNED NOT NULL, KEY(friday), 
+saturday TINYINT UNSIGNED NOT NULL, KEY(saturday), 
+sunday TINYINT UNSIGNED NOT NULL, KEY(sunday), 
+start_date DATE NOT NULL, KEY(start_date),  
+end_date DATE NOT NULL, KEY(end_date), 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16), KEY(data_hash), 
+UNIQUE KEY(service_id, feed_id_last)
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_stops (
+mysql_id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+stop_id VARCHAR(120) NOT NULL, KEY(stop_id), 
+stop_code VARCHAR(60), 
+stop_name VARCHAR(200), 
+stop_desc VARCHAR(600), 
+stop_lat DECIMAL(10,8) NOT NULL, 
+stop_lon DECIMAL(10,8) NOT NULL,  
+zone_id VARCHAR(60), 
+stop_url VARCHAR(200), 
+location_type TINYINT UNSIGNED, 
+parent_station VARCHAR(120), 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16), KEY(data_hash), 
+UNIQUE KEY(stop_id, feed_id_last)
+);
+
+SHOW WARNINGS;
+CREATE TABLE sched_trips (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+route_id VARCHAR(120) NOT NULL, KEY(route_id), 
+service_id VARCHAR(200), KEY(service_id), 
+trip_id VARCHAR(200), KEY(trip_id), 
+trip_headsign VARCHAR(200), KEY(trip_headsign), 
+direction_id VARCHAR(60), 
+block_id VARCHAR(60), 
+shape_id VARCHAR(60), KEY (shape_id), 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16),  KEY(data_hash), 
+UNIQUE KEY(trip_id,feed_id_last), 
+FOREIGN KEY(service_id) REFERENCES sched_cal(service_id) ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_transfers (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+from_stop_id VARCHAR(60) NOT NULL, KEY(from_stop_id), 
+FOREIGN KEY(from_stop_id) REFERENCES sched_stops(stop_id) ON UPDATE NO ACTION ON DELETE NO ACTION, 
+to_stop_id VARCHAR(60) NOT NULL, KEY(to_stop_id),
+FOREIGN KEY(to_stop_id) REFERENCES sched_stops(stop_id) ON UPDATE NO ACTION ON DELETE NO ACTION, 
+transfer_type TINYINT UNSIGNED NOT NULL, KEY(transfer_type), 
+min_transfer_time MEDIUMINT UNSIGNED, 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16), KEY(data_hash)
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_stop_times (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+trip_id VARCHAR(200) NOT NULL, KEY (trip_id), 
+arrival_time TIME NOT NULL, KEY(arrival_time), 
+departure_time TIME NOT NULL, KEY(departure_time), 
+stop_id VARCHAR(120) NOT NULL, KEY(stop_id), 
+FOREIGN KEY(stop_id) REFERENCES sched_stops(stop_id) ON UPDATE NO ACTION ON DELETE NO ACTION, 
+stop_sequence TINYINT UNSIGNED NOT NULL, KEY(stop_sequence), 
+stop_headsign VARCHAR(60), 
+pickup_type TINYINT UNSIGNED NOT NULL, 
+drop_off_type TINYINT UNSIGNED NOT NULL,
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16), KEY(data_hash), 
+KEY (mysql_id, stop_sequence), 
+FOREIGN KEY(trip_id) REFERENCES sched_trips(trip_id) ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_shapes (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+shape_id VARCHAR(60), KEY (shape_id), 
+shape_pt_lat DECIMAL(12,10) NOT NULL, 
+shape_pt_lon DECIMAL(12,10) NOT NULL, 
+shape_pt_sequence INT NOT NULL, 
+shape_dist_traveled INT, 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16),  KEY(data_hash)
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_agency (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+agency_id TINYINT UNSIGNED NOT NULL, KEY(agency_id), 
+agency_name VARCHAR(120), 
+agency_url VARCHAR(200), 
+agency_timezone VARCHAR(60), 
+agency_lang CHAR(2), 
+agency_phone VARCHAR(60), 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16), KEY(data_hash), 
+UNIQUE KEY(agency_id,feed_id_last)
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_routes (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+route_id VARCHAR(120) NOT NULL, KEY(route_id), 
+agency_id TINYINT UNSIGNED NOT NULL, 
+route_short_name VARCHAR(120), 
+route_long_name VARCHAR(200), 
+route_desc VARCHAR(120), 
+route_type TINYINT UNSIGNED NOT NULL, KEY(route_type),  
+route_url VARCHAR(200), 
+route_color VARCHAR(8), 
+route_text_color VARCHAR(8), 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16), KEY(data_hash), 
+FOREIGN KEY(agency_id) REFERENCES sched_agency(agency_id) ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_freq (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+trip_id VARCHAR(120) NOT NULL, KEY(trip_id), 
+start_time TIME NOT NULL, 
+end_time TIME NOT NULL, 
+headway_secs MEDIUMINT NOT NULL, 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16), KEY(data_hash), 
+FOREIGN KEY(trip_id) REFERENCES sched_trips(trip_id) ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+SHOW WARNINGS;
+
+CREATE TABLE sched_cal_dates (
+mysql_id INT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY(mysql_id), 
+service_id VARCHAR(200) NOT NULL, KEY(service_id), 
+date DATE NOT NULL, KEY(date), 
+exception_type TINYINT UNSIGNED NOT NULL, KEY(exception_type), 
+timestamp TIMESTAMP, 
+feed_id_first SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_first), 
+feed_id_last SMALLINT UNSIGNED NOT NULL DEFAULT 1, KEY (feed_id_last), 
+data_hash BINARY(16), KEY(data_hash), 
+FOREIGN KEY(service_id) REFERENCES sched_cal(service_id) ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+SHOW WARNINGS;
+
+CREATE TABLE trips_origins_dests (
+trip_mysql_id INT UNSIGNED NOT NULL, PRIMARY KEY(trip_mysql_id), 
+trip_id VARCHAR(200), KEY(trip_id), 
+first_stop_id VARCHAR(120) NOT NULL, KEY(first_stop_id), 
+first_stop_mysql_id SMALLINT UNSIGNED NOT NULL, KEY (first_stop_mysql_id), 
+last_stop_id VARCHAR(120) NOT NULL, KEY(last_stop_id), 
+last_stop_mysql_id SMALLINT UNSIGNED NOT NULL, KEY (last_stop_mysql_id), 
+feed_id_last SMALLINT UNSIGNED NOT NULL, KEY (feed_id_last)
+);
+SHOW WARNINGS;

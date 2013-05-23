@@ -1,0 +1,14 @@
+*~
+*.[oad]
+*data/*
+*backup/*
+*protobuf*
+/*backup/*
+*.pyc
+*/backup/*
+*/BACKUP/*
+*BACKUP/*
+*/Backup/*
+*Backup/*
+*.pyc
+*/superseded/*
