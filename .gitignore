@@ -12,3 +12,8 @@
 *Backup/*
 *.pyc
 */superseded/*
+*.png
+*.ps
+*.cfg
+*.log
+*.zip
