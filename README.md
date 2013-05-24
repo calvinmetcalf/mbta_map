@@ -7,6 +7,7 @@ mbta_map
 ===========
 
 visualizing mbta travel times
+for the finished product, see: < http://www.transitboston.com/resources/time_maps/ >
 
 dependencies / requires:
     
